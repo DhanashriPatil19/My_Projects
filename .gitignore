@@ -1,0 +1,17 @@
+# Ignore Python environment and cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+env/
+venv/
+*.sqlite3
+
+# Ignore environment variables
+backend/.env
+
+# Ignore node_modules for frontend
+frontend/node_modules/
+
+# Optional: VSCode settings
+.vscode/

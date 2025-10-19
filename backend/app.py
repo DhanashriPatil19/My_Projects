@@ -6,17 +6,24 @@ import hashlib
 import jwt
 import datetime
 from functools import wraps
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
-app.config['SECRET_KEY'] = 'your-secret-key-change-this'
 
-# Database configuration
+# Use environment variable for secret key
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+
+# Database configuration using environment variables
 DB_CONFIG = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': 'Dhanu@1701',
-    'database': 'agro_shop'
+    'host': os.getenv('DB_HOST'),
+    'user': os.getenv('DB_USER'),
+    'password': os.getenv('DB_PASSWORD'),
+    'database': os.getenv('DB_NAME')
 }
 
 def get_db_connection():
