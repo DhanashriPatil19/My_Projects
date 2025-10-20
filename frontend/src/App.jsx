@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Edit2, Trash2, LogOut, User, Search, Menu, Package, Plus, Minus, X } from 'lucide-react';
+import { ShoppingCart, Edit2, Trash2, LogOut, User, Search, Plus, Minus, X, Package, TrendingUp, Star, Heart } from 'lucide-react';
 
-// const API_URL = 'http://localhost:5000/api';
 const API_URL = 'https://agro-shop-y0t2.onrender.com/api';
+// For local development, use: const API_URL = 'http://localhost:5000/api';
 
 export default function AgroShopApp() {
   const [user, setUser] = useState(null);
@@ -70,8 +70,20 @@ export default function AgroShopApp() {
     try {
       const response = await fetch(`${API_URL}/products`);
       const data = await response.json();
-      setProducts(data);
-      setFilteredProducts(data);
+      
+      // Backend returns products - map to include default values for missing fields
+      const productsWithDefaults = data.map(p => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        category: p.category,
+        description: p.description || 'No description available',
+        stock: p.stock || 0,
+        image_url: p.image_url || 'https://via.placeholder.com/400x300?text=No+Image'
+      }));
+      
+      setProducts(productsWithDefaults);
+      setFilteredProducts(productsWithDefaults);
     } catch (error) {
       console.error('Error fetching products:', error);
     }
@@ -88,15 +100,22 @@ export default function AgroShopApp() {
       const data = await response.json();
       
       if (response.ok) {
+        // Backend returns: { token, name, email, role }
+        const userObj = {
+          username: data.name,
+          email: data.email,
+          role: data.role || 'customer'
+        };
         localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('user', JSON.stringify(userObj));
         setToken(data.token);
-        setUser(data.user);
+        setUser(userObj);
       } else {
-        alert(data.message);
+        alert(data.error || 'Login failed');
       }
     } catch (error) {
-      alert('Login failed');
+      console.error('Login error:', error);
+      alert('Login failed. Please try again.');
     }
   };
 
@@ -106,7 +125,11 @@ export default function AgroShopApp() {
       const response = await fetch(`${API_URL}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({ 
+          name: formData.username,
+          email: formData.email, 
+          password: formData.password 
+        })
       });
       const data = await response.json();
       
@@ -115,10 +138,11 @@ export default function AgroShopApp() {
         setShowLogin(true);
         setFormData({ username: '', email: '', password: '' });
       } else {
-        alert(data.message);
+        alert(data.error || 'Registration failed');
       }
     } catch (error) {
-      alert('Registration failed');
+      console.error('Registration error:', error);
+      alert('Registration failed. Please try again.');
     }
   };
 
@@ -178,7 +202,7 @@ export default function AgroShopApp() {
       });
 
       if (response.ok) {
-        alert('Order placed successfully! 🎉');
+        alert('🎉 Order placed successfully!');
         setCart([]);
         setShowCartSidebar(false);
         fetchProducts();
@@ -204,7 +228,7 @@ export default function AgroShopApp() {
       });
 
       if (response.ok) {
-        alert(productForm.id ? 'Product updated successfully! ✓' : 'Product added successfully! ✓');
+        alert(productForm.id ? '✓ Product updated successfully!' : '✓ Product added successfully!');
         setProductForm({ id: null, name: '', category: '', description: '', price: '', stock: '', image_url: '' });
         fetchProducts();
         setActiveView('products');
@@ -242,83 +266,117 @@ export default function AgroShopApp() {
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden max-w-4xl w-full flex">
-          <div className="hidden md:block md:w-1/2 bg-gradient-to-br from-green-600 to-green-700 p-12 text-white">
-            <h1 className="text-4xl font-bold mb-4">🌾 AgroShop</h1>
-            <p className="text-lg mb-8">Your trusted partner for quality agricultural products</p>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="bg-white bg-opacity-20 p-2 rounded">✓</div>
-                <span>Premium Quality Seeds</span>
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden max-w-5xl w-full flex">
+          <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-green-600 via-emerald-600 to-teal-600 p-12 flex-col justify-between relative overflow-hidden">
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-0 left-0 w-64 h-64 bg-white rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+              <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full translate-x-1/3 translate-y-1/3"></div>
+            </div>
+            
+            <div className="relative z-10">
+              <div className="text-6xl mb-4">🌾</div>
+              <h1 className="text-5xl font-bold text-white mb-4">AgroShop</h1>
+              <p className="text-xl text-green-100 mb-8">Premium Agricultural Products Marketplace</p>
+            </div>
+
+            <div className="space-y-4 relative z-10">
+              <div className="flex items-center gap-4 bg-white bg-opacity-20 rounded-xl p-4 backdrop-blur-sm">
+                <div className="bg-white bg-opacity-30 p-3 rounded-lg">
+                  <Package className="text-white" size={24} />
+                </div>
+                <div>
+                  <p className="text-white font-semibold text-lg">Premium Quality</p>
+                  <p className="text-green-100 text-sm">Certified products only</p>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="bg-white bg-opacity-20 p-2 rounded">✓</div>
-                <span>Organic Fertilizers</span>
+              
+              <div className="flex items-center gap-4 bg-white bg-opacity-20 rounded-xl p-4 backdrop-blur-sm">
+                <div className="bg-white bg-opacity-30 p-3 rounded-lg">
+                  <TrendingUp className="text-white" size={24} />
+                </div>
+                <div>
+                  <p className="text-white font-semibold text-lg">Best Prices</p>
+                  <p className="text-green-100 text-sm">Competitive market rates</p>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="bg-white bg-opacity-20 p-2 rounded">✓</div>
-                <span>Modern Equipment</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="bg-white bg-opacity-20 p-2 rounded">✓</div>
-                <span>Fast Delivery</span>
+
+              <div className="flex items-center gap-4 bg-white bg-opacity-20 rounded-xl p-4 backdrop-blur-sm">
+                <div className="bg-white bg-opacity-30 p-3 rounded-lg">
+                  <Star className="text-white" size={24} />
+                </div>
+                <div>
+                  <p className="text-white font-semibold text-lg">Trusted by 10,000+ Farmers</p>
+                  <p className="text-green-100 text-sm">4.8★ Rating</p>
+                </div>
               </div>
             </div>
           </div>
           
-          <div className="w-full md:w-1/2 p-8">
-            <div className="flex gap-2 mb-8">
+          <div className="w-full lg:w-1/2 p-10">
+            <div className="flex gap-2 mb-8 bg-gray-100 rounded-xl p-1">
               <button
                 onClick={() => setShowLogin(true)}
-                className={`flex-1 py-3 rounded-lg font-semibold transition ${showLogin ? 'bg-green-600 text-white shadow-lg' : 'bg-gray-100 text-gray-600'}`}
+                className={`flex-1 py-3 rounded-lg font-bold transition-all duration-300 ${showLogin ? 'bg-white text-green-600 shadow-md' : 'text-gray-500'}`}
               >
                 Login
               </button>
               <button
                 onClick={() => setShowLogin(false)}
-                className={`flex-1 py-3 rounded-lg font-semibold transition ${!showLogin ? 'bg-green-600 text-white shadow-lg' : 'bg-gray-100 text-gray-600'}`}
+                className={`flex-1 py-3 rounded-lg font-bold transition-all duration-300 ${!showLogin ? 'bg-white text-green-600 shadow-md' : 'text-gray-500'}`}
               >
                 Register
               </button>
             </div>
 
-            <div>
+            <div className="space-y-5">
               {!showLogin && (
-                <input
-                  type="text"
-                  placeholder="Username"
-                  className="w-full p-4 border-2 border-gray-200 rounded-lg mb-4 focus:border-green-500 focus:outline-none"
-                  value={formData.username}
-                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                />
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Full Name</label>
+                  <input
+                    type="text"
+                    placeholder="Enter your name"
+                    className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition"
+                    value={formData.username}
+                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                  />
+                </div>
               )}
-              <input
-                type="email"
-                placeholder="Email Address"
-                className="w-full p-4 border-2 border-gray-200 rounded-lg mb-4 focus:border-green-500 focus:outline-none"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
-              <input
-                type="password"
-                placeholder="Password"
-                className="w-full p-4 border-2 border-gray-200 rounded-lg mb-6 focus:border-green-500 focus:outline-none"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              />
+              
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Email Address</label>
+                <input
+                  type="email"
+                  placeholder="you@example.com"
+                  className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Password</label>
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                />
+              </div>
+              
               <button 
                 onClick={showLogin ? handleLogin : handleRegister}
-                className="w-full bg-green-600 text-white py-4 rounded-lg font-semibold hover:bg-green-700 transition shadow-lg"
+                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 rounded-xl font-bold hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               >
-                {showLogin ? 'Login' : 'Create Account'}
+                {showLogin ? 'Login to AgroShop' : 'Create Account'}
               </button>
             </div>
             
-            <div className="mt-6 p-4 bg-green-50 rounded-lg">
-              <p className="text-sm text-gray-600 text-center font-medium">Demo Credentials</p>
-              <p className="text-xs text-gray-500 text-center mt-1">
-                Admin: admin@agroshop.com / admin123
+            <div className="mt-8 p-5 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border-2 border-green-100">
+              <p className="text-sm font-bold text-gray-700 text-center mb-2">Demo Account</p>
+              <p className="text-xs text-gray-600 text-center">
+                <span className="font-semibold">Admin:</span> admin@agroshop.com / admin123
               </p>
             </div>
           </div>
@@ -329,81 +387,101 @@ export default function AgroShopApp() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Top Banner */}
+      <div className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white py-2 px-4 text-center text-sm font-medium">
+        🎉 Special Offer: Get 20% off on all seeds | Free delivery on orders above ₹2000
+      </div>
+
       {/* Header */}
-      <header className="bg-white shadow-md sticky top-0 z-50">
-        <div className="bg-gradient-to-r from-green-600 to-green-700 text-white">
-          <div className="max-w-7xl mx-auto px-4 py-2 flex justify-between items-center text-sm">
-            <div className="flex items-center gap-4">
-              <span className="flex items-center gap-2">
-                <User size={16} />
-                {user?.username}
-              </span>
-              {user?.role === 'admin' && (
-                <span className="bg-yellow-400 text-green-900 px-2 py-1 rounded text-xs font-semibold">
-                  ADMIN
-                </span>
-              )}
-            </div>
-            <button 
-              onClick={handleLogout} 
-              className="flex items-center gap-2 hover:text-green-200 transition"
-            >
-              <LogOut size={16} />
-              Logout
-            </button>
-          </div>
-        </div>
-
+      <header className="bg-white shadow-lg sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-8">
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-green-700">🌾 Shree Ganesh Agro</h1>
-            </div>
-
-            <div className="flex-1 max-w-2xl">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search for agricultural products..."
-                  className="w-full px-4 py-3 pl-12 border-2 border-green-500 rounded-lg focus:outline-none focus:border-green-600"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+          <div className="flex items-center gap-6">
+            {/* Logo */}
+            <div className="flex items-center gap-3">
+              <div className="text-4xl">🌾</div>
+              <div>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">AgroShop</h1>
+                <p className="text-xs text-gray-500">Premium Quality</p>
               </div>
             </div>
 
-            {user?.role === 'customer' && (
-              <button
-                onClick={() => setShowCartSidebar(!showCartSidebar)}
-                className="relative flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition"
-              >
-                <ShoppingCart size={20} />
-                <span className="font-semibold">Cart</span>
-                {cartItemsCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
-                    {cartItemsCount}
+            {/* Search Bar */}
+            <div className="flex-1 max-w-2xl">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                  type="text"
+                  placeholder="Search for seeds, fertilizers, equipment..."
+                  className="w-full px-12 py-3.5 border-2 border-gray-200 rounded-full focus:outline-none focus:border-green-500 transition shadow-sm"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* User Section */}
+            <div className="flex items-center gap-4">
+              <div className="text-right hidden md:block">
+                <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                  <User size={18} className="text-green-600" />
+                  {user?.username}
+                </div>
+                {user?.role === 'admin' && (
+                  <span className="inline-block bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                    ADMIN
                   </span>
                 )}
+              </div>
+
+              {user?.role === 'customer' && (
+                <button
+                  onClick={() => setShowCartSidebar(!showCartSidebar)}
+                  className="relative flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 rounded-full hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl font-semibold"
+                >
+                  <ShoppingCart size={20} />
+                  <span className="hidden md:inline">Cart</span>
+                  {cartItemsCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center animate-pulse">
+                      {cartItemsCount}
+                    </span>
+                  )}
+                </button>
+              )}
+
+              <button 
+                onClick={handleLogout} 
+                className="flex items-center gap-2 px-4 py-3 text-red-600 hover:bg-red-50 rounded-full transition font-semibold"
+              >
+                <LogOut size={18} />
+                <span className="hidden md:inline">Logout</span>
               </button>
-            )}
+            </div>
           </div>
         </div>
 
-        <div className="border-t">
+        {/* Navigation */}
+        <div className="border-t bg-gradient-to-r from-gray-50 to-white">
           <div className="max-w-7xl mx-auto px-4">
-            <div className="flex gap-1 overflow-x-auto py-2">
+            <div className="flex gap-2 overflow-x-auto py-3 scrollbar-hide">
               {user?.role === 'admin' && (
                 <>
                   <button
                     onClick={() => setActiveView('products')}
-                    className={`px-6 py-2 rounded-lg whitespace-nowrap transition ${activeView === 'products' ? 'bg-green-600 text-white' : 'hover:bg-gray-100'}`}
+                    className={`px-6 py-2.5 rounded-full whitespace-nowrap font-semibold transition-all duration-300 ${
+                      activeView === 'products' 
+                        ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg' 
+                        : 'bg-white text-gray-700 hover:bg-gray-100 border-2 border-gray-200'
+                    }`}
                   >
                     All Products
                   </button>
                   <button
                     onClick={() => setActiveView('manage')}
-                    className={`px-6 py-2 rounded-lg whitespace-nowrap flex items-center gap-2 transition ${activeView === 'manage' ? 'bg-green-600 text-white' : 'hover:bg-gray-100'}`}
+                    className={`px-6 py-2.5 rounded-full whitespace-nowrap flex items-center gap-2 font-semibold transition-all duration-300 ${
+                      activeView === 'manage' 
+                        ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg' 
+                        : 'bg-white text-gray-700 hover:bg-gray-100 border-2 border-gray-200'
+                    }`}
                   >
                     <Plus size={16} />
                     Add Product
@@ -414,7 +492,11 @@ export default function AgroShopApp() {
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-6 py-2 rounded-lg whitespace-nowrap transition ${selectedCategory === cat ? 'bg-green-600 text-white' : 'hover:bg-gray-100'}`}
+                  className={`px-6 py-2.5 rounded-full whitespace-nowrap font-semibold transition-all duration-300 ${
+                    selectedCategory === cat 
+                      ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg' 
+                      : 'bg-white text-gray-700 hover:bg-gray-100 border-2 border-gray-200'
+                  }`}
                 >
                   {cat}
                 </button>
@@ -425,45 +507,56 @@ export default function AgroShopApp() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-6">
+      <main className="max-w-7xl mx-auto px-4 py-8">
         {activeView === 'products' && (
           <div>
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">
+            <div className="mb-8">
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">
                 {selectedCategory === 'All' ? 'All Products' : selectedCategory}
               </h2>
-              <p className="text-gray-600">{filteredProducts.length} products found</p>
+              <p className="text-gray-600 flex items-center gap-2">
+                <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                {filteredProducts.length} products available
+              </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredProducts.map(product => (
-                <div key={product.id} className="bg-white rounded-lg shadow hover:shadow-lg transition group">
-                  <div className="relative overflow-hidden">
+                <div key={product.id} className="bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden group transform hover:-translate-y-1">
+                  <div className="relative overflow-hidden h-56 bg-gradient-to-br from-gray-100 to-gray-200">
                     <img 
                       src={product.image_url} 
                       alt={product.name} 
-                      className="w-full h-56 object-cover group-hover:scale-110 transition duration-300" 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
                     />
                     {product.stock < 10 && product.stock > 0 && (
-                      <span className="absolute top-2 right-2 bg-orange-500 text-white text-xs px-2 py-1 rounded">
-                        Only {product.stock} left
+                      <span className="absolute top-3 right-3 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs px-3 py-1.5 rounded-full font-bold shadow-lg">
+                        Only {product.stock} left!
                       </span>
                     )}
                     {product.stock === 0 && (
-                      <span className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
+                      <span className="absolute top-3 right-3 bg-gray-800 text-white text-xs px-3 py-1.5 rounded-full font-bold shadow-lg">
                         Out of Stock
                       </span>
                     )}
+                    <div className="absolute top-3 left-3 bg-white bg-opacity-90 backdrop-blur-sm text-green-700 text-xs px-3 py-1.5 rounded-full font-bold">
+                      {product.category}
+                    </div>
                   </div>
                   
-                  <div className="p-4">
-                    <p className="text-xs text-gray-500 mb-1">{product.category}</p>
-                    <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2">{product.name}</h3>
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">{product.description}</p>
+                  <div className="p-5">
+                    <h3 className="font-bold text-gray-900 mb-2 text-lg line-clamp-1">{product.name}</h3>
+                    <p className="text-sm text-gray-600 mb-4 line-clamp-2 h-10">{product.description}</p>
                     
-                    <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center justify-between mb-4">
                       <div>
-                        <span className="text-2xl font-bold text-green-700">₹{product.price}</span>
+                        <span className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                          ₹{product.price}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 bg-green-50 px-3 py-1 rounded-full">
+                        <Star size={14} className="text-yellow-500 fill-yellow-500" />
+                        <span className="text-sm font-semibold text-gray-700">4.5</span>
                       </div>
                     </div>
 
@@ -471,10 +564,10 @@ export default function AgroShopApp() {
                       <button
                         onClick={() => addToCart(product)}
                         disabled={product.stock === 0}
-                        className={`w-full py-2 rounded-lg font-semibold transition ${
+                        className={`w-full py-3 rounded-xl font-bold transition-all duration-300 ${
                           product.stock === 0 
-                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                            : 'bg-green-600 text-white hover:bg-green-700'
+                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                            : 'bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
                         }`}
                       >
                         {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
@@ -485,15 +578,15 @@ export default function AgroShopApp() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => editProduct(product)}
-                          className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2"
+                          className="flex-1 bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition-all duration-300 flex items-center justify-center gap-2 font-semibold shadow-md hover:shadow-lg"
                         >
-                          <Edit2 size={14} /> Edit
+                          <Edit2 size={16} /> Edit
                         </button>
                         <button
                           onClick={() => handleDeleteProduct(product.id)}
-                          className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition flex items-center justify-center gap-2"
+                          className="flex-1 bg-red-600 text-white py-3 rounded-xl hover:bg-red-700 transition-all duration-300 flex items-center justify-center gap-2 font-semibold shadow-md hover:shadow-lg"
                         >
-                          <Trash2 size={14} /> Delete
+                          <Trash2 size={16} /> Delete
                         </button>
                       </div>
                     )}
@@ -503,41 +596,52 @@ export default function AgroShopApp() {
             </div>
 
             {filteredProducts.length === 0 && (
-              <div className="text-center py-16">
-                <Package size={64} className="mx-auto text-gray-300 mb-4" />
-                <p className="text-xl text-gray-500">No products found</p>
+              <div className="text-center py-20">
+                <div className="inline-block p-6 bg-gray-100 rounded-full mb-4">
+                  <Package size={64} className="text-gray-400" />
+                </div>
+                <p className="text-2xl font-bold text-gray-400 mb-2">No products found</p>
+                <p className="text-gray-500">Try adjusting your search or filters</p>
               </div>
             )}
           </div>
         )}
 
         {activeView === 'manage' && user?.role === 'admin' && (
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-white rounded-lg shadow-lg p-8">
-              <h2 className="text-2xl font-bold mb-6 text-gray-800">
-                {productForm.id ? 'Edit Product' : 'Add New Product'}
-              </h2>
-              
-              <div className="space-y-4">
+          <div className="max-w-3xl mx-auto">
+            <div className="bg-white rounded-3xl shadow-xl p-8">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="p-3 bg-green-100 rounded-xl">
+                  <Package className="text-green-600" size={28} />
+                </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Product Name</label>
+                  <h2 className="text-3xl font-bold text-gray-900">
+                    {productForm.id ? 'Edit Product' : 'Add New Product'}
+                  </h2>
+                  <p className="text-gray-500">Fill in the product details below</p>
+                </div>
+              </div>
+              
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Product Name *</label>
                   <input
                     type="text"
-                    placeholder="Enter product name"
-                    className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:outline-none"
+                    placeholder="e.g., Organic Wheat Seeds"
+                    className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition"
                     value={productForm.name}
                     onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Category</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Category *</label>
                   <select
-                    className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:outline-none"
+                    className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition appearance-none bg-white"
                     value={productForm.category}
                     onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}
                   >
-                    <option value="">Select Category</option>
+                    <option value="">Select a category</option>
                     {categories.filter(c => c !== 'All').map(cat => (
                       <option key={cat} value={cat}>{cat}</option>
                     ))}
@@ -545,35 +649,35 @@ export default function AgroShopApp() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Description *</label>
                   <textarea
-                    placeholder="Enter product description"
-                    rows="3"
-                    className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:outline-none"
+                    placeholder="Describe your product..."
+                    rows="4"
+                    className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition resize-none"
                     value={productForm.description}
                     onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Price (₹)</label>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Price (₹) *</label>
                     <input
                       type="number"
                       step="0.01"
-                      placeholder="0.00"
-                      className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:outline-none"
+                      placeholder="299.99"
+                      className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition"
                       value={productForm.price}
                       onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Stock</label>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Stock Quantity *</label>
                     <input
                       type="number"
-                      placeholder="0"
-                      className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:outline-none"
+                      placeholder="100"
+                      className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition"
                       value={productForm.stock}
                       onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })}
                     />
@@ -581,20 +685,20 @@ export default function AgroShopApp() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Image URL</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Image URL *</label>
                   <input
                     type="url"
                     placeholder="https://example.com/image.jpg"
-                    className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:outline-none"
+                    className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition"
                     value={productForm.image_url}
                     onChange={(e) => setProductForm({ ...productForm, image_url: e.target.value })}
                   />
                 </div>
 
-                <div className="flex gap-3 pt-4">
+                <div className="flex gap-4 pt-4">
                   <button 
                     onClick={handleProductSubmit}
-                    className="flex-1 bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition"
+                    className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 rounded-xl font-bold hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl"
                   >
                     {productForm.id ? 'Update Product' : 'Add Product'}
                   </button>
@@ -603,7 +707,7 @@ export default function AgroShopApp() {
                       setProductForm({ id: null, name: '', category: '', description: '', price: '', stock: '', image_url: '' });
                       setActiveView('products');
                     }}
-                    className="px-8 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition"
+                    className="px-8 bg-gray-200 text-gray-700 py-4 rounded-xl font-bold hover:bg-gray-300 transition-all duration-300"
                   >
                     Cancel
                   </button>
@@ -616,56 +720,93 @@ export default function AgroShopApp() {
 
       {/* Cart Sidebar */}
       {showCartSidebar && user?.role === 'customer' && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50" onClick={() => setShowCartSidebar(false)}>
+        <>
           <div 
-            className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 backdrop-blur-sm transition-opacity duration-300" 
+            onClick={() => setShowCartSidebar(false)}
+          ></div>
+          <div className="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-out">
             <div className="flex flex-col h-full">
-              <div className="bg-green-600 text-white p-4 flex justify-between items-center">
-                <h3 className="text-xl font-bold">My Cart ({cartItemsCount} items)</h3>
-                <button onClick={() => setShowCartSidebar(false)}>
-                  <X size={24} />
-                </button>
+              {/* Cart Header */}
+              <div className="bg-gradient-to-r from-green-600 to-emerald-600 text-white p-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-2xl font-bold">Shopping Cart</h3>
+                    <p className="text-green-100 text-sm mt-1">{cartItemsCount} items in cart</p>
+                  </div>
+                  <button 
+                    onClick={() => setShowCartSidebar(false)}
+                    className="bg-white bg-opacity-20 p-2 rounded-full hover:bg-opacity-30 transition"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4">
+              {/* Cart Items */}
+              <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
                 {cart.length === 0 ? (
-                  <div className="text-center py-16">
-                    <ShoppingCart size={64} className="mx-auto text-gray-300 mb-4" />
-                    <p className="text-gray-500">Your cart is empty</p>
+                  <div className="text-center py-20">
+                    <div className="inline-block p-6 bg-gray-100 rounded-full mb-4">
+                      <ShoppingCart size={64} className="text-gray-400" />
+                    </div>
+                    <p className="text-xl font-bold text-gray-400 mb-2">Your cart is empty</p>
+                    <p className="text-gray-500 mb-6">Add some products to get started!</p>
+                    <button
+                      onClick={() => setShowCartSidebar(false)}
+                      className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 rounded-full font-semibold hover:from-green-700 hover:to-emerald-700 transition"
+                    >
+                      Continue Shopping
+                    </button>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     {cart.map(item => (
-                      <div key={item.id} className="bg-white border rounded-lg p-4">
+                      <div key={item.id} className="bg-white rounded-2xl shadow-md p-4 hover:shadow-lg transition-all duration-300">
                         <div className="flex gap-4">
-                          <img src={item.image_url} alt={item.name} className="w-20 h-20 object-cover rounded" />
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-sm mb-1">{item.name}</h4>
-                            <p className="text-green-600 font-bold">₹{item.price}</p>
-                            
-                            <div className="flex items-center gap-3 mt-2">
-                              <button
-                                onClick={() => updateCartQuantity(item.id, item.quantity - 1)}
-                                className="bg-gray-200 p-1 rounded hover:bg-gray-300"
-                              >
-                                <Minus size={16} />
-                              </button>
-                              <span className="font-semibold">{item.quantity}</span>
-                              <button
-                                onClick={() => updateCartQuantity(item.id, item.quantity + 1)}
-                                className="bg-gray-200 p-1 rounded hover:bg-gray-300"
-                              >
-                                <Plus size={16} />
-                              </button>
-                              <button
-                                onClick={() => removeFromCart(item.id)}
-                                className="ml-auto text-red-600 text-sm hover:underline"
-                              >
-                                Remove
-                              </button>
+                          <div className="relative">
+                            <img 
+                              src={item.image_url} 
+                              alt={item.name} 
+                              className="w-24 h-24 object-cover rounded-xl" 
+                            />
+                            <div className="absolute -top-2 -right-2 bg-green-600 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
+                              {item.quantity}
                             </div>
+                          </div>
+                          
+                          <div className="flex-1">
+                            <h4 className="font-bold text-gray-900 mb-1 line-clamp-2">{item.name}</h4>
+                            <p className="text-sm text-gray-500 mb-2">{item.category}</p>
+                            <div className="flex items-center justify-between">
+                              <span className="text-xl font-bold text-green-600">₹{item.price}</span>
+                              <div className="flex items-center gap-2 bg-gray-100 rounded-full p-1">
+                                <button
+                                  onClick={() => updateCartQuantity(item.id, item.quantity - 1)}
+                                  className="bg-white p-1.5 rounded-full hover:bg-gray-200 transition shadow-sm"
+                                >
+                                  <Minus size={14} className="text-gray-700" />
+                                </button>
+                                <span className="font-bold text-gray-900 px-3">{item.quantity}</span>
+                                <button
+                                  onClick={() => updateCartQuantity(item.id, item.quantity + 1)}
+                                  className="bg-white p-1.5 rounded-full hover:bg-gray-200 transition shadow-sm"
+                                >
+                                  <Plus size={14} className="text-gray-700" />
+                                </button>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between mt-3 pt-3 border-t">
+                              <span className="text-sm text-gray-600">Subtotal:</span>
+                              <span className="text-lg font-bold text-gray-900">₹{(item.price * item.quantity).toFixed(2)}</span>
+                            </div>
+                            <button
+                              onClick={() => removeFromCart(item.id)}
+                              className="mt-2 text-red-600 text-sm font-semibold hover:text-red-700 transition flex items-center gap-1"
+                            >
+                              <Trash2 size={14} />
+                              Remove
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -674,24 +815,90 @@ export default function AgroShopApp() {
                 )}
               </div>
 
+              {/* Cart Footer */}
               {cart.length > 0 && (
-                <div className="border-t p-4 bg-gray-50">
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="text-lg font-semibold">Total Amount:</span>
-                    <span className="text-2xl font-bold text-green-600">₹{cartTotal.toFixed(2)}</span>
+                <div className="border-t bg-white p-6 shadow-2xl">
+                  <div className="space-y-3 mb-6">
+                    <div className="flex justify-between text-gray-600">
+                      <span>Subtotal ({cartItemsCount} items)</span>
+                      <span className="font-semibold">₹{cartTotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-gray-600">
+                      <span>Delivery Charges</span>
+                      <span className="font-semibold text-green-600">FREE</span>
+                    </div>
+                    <div className="border-t pt-3 flex justify-between items-center">
+                      <span className="text-xl font-bold text-gray-900">Total Amount</span>
+                      <span className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                        ₹{cartTotal.toFixed(2)}
+                      </span>
+                    </div>
                   </div>
                   <button
                     onClick={handleCheckout}
-                    className="w-full bg-green-600 text-white py-4 rounded-lg font-bold hover:bg-green-700 transition text-lg"
+                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 rounded-xl font-bold hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl text-lg transform hover:-translate-y-0.5"
                   >
-                    Place Order
+                    Place Order • ₹{cartTotal.toFixed(2)}
                   </button>
+                  <p className="text-xs text-gray-500 text-center mt-3">
+                    🔒 Secure checkout • 100% Safe payment
+                  </p>
                 </div>
               )}
             </div>
           </div>
-        </div>
+        </>
       )}
+
+      {/* Footer */}
+      <footer className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white mt-16">
+        <div className="max-w-7xl mx-auto px-4 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-3xl">🌾</span>
+                <span className="text-2xl font-bold">AgroShop</span>
+              </div>
+              <p className="text-gray-400 text-sm">
+                Your trusted partner for premium agricultural products and farming solutions.
+              </p>
+            </div>
+            
+            <div>
+              <h4 className="font-bold mb-4">Quick Links</h4>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li className="hover:text-white cursor-pointer transition">About Us</li>
+                <li className="hover:text-white cursor-pointer transition">Products</li>
+                <li className="hover:text-white cursor-pointer transition">Contact</li>
+                <li className="hover:text-white cursor-pointer transition">Blog</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-bold mb-4">Categories</h4>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li className="hover:text-white cursor-pointer transition">Seeds</li>
+                <li className="hover:text-white cursor-pointer transition">Fertilizers</li>
+                <li className="hover:text-white cursor-pointer transition">Equipment</li>
+                <li className="hover:text-white cursor-pointer transition">Tools</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-bold mb-4">Contact Us</h4>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li>📧 support@agroshop.com</li>
+                <li>📞 +91 98765 43210</li>
+                <li>📍 Mumbai, Maharashtra</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="border-t border-gray-700 mt-8 pt-8 text-center text-sm text-gray-400">
+            <p>© 2025 AgroShop. All rights reserved. | Made with 💚 for farmers</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
