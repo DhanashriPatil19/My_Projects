@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Edit2, Trash2, LogOut, User, Search, Menu, Package, Plus, Minus, X } from 'lucide-react';
 
 // const API_URL = 'http://localhost:5000/api';
-const API_URL = 'https://agro-shop-backend.onrender.com/api';
+const API_URL = 'https://agro-shop-y0t2.onrender.com/api';
 
 export default function AgroShopApp() {
   const [user, setUser] = useState(null);
